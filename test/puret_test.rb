@@ -58,6 +58,16 @@ class PuretTest < ActiveSupport::TestCase
     I18n.locale = :de
     assert_equal 'Svensk titel', post.title
   end
+
+  test "assert separate fallback for each attribute" do
+    post = Post.first
+    I18n.locale = :de
+    post.text = 'Deutsche text'
+    post.save!
+    I18n.locale = :sv
+    assert_equal 'English title', post.title
+    assert_equal 'Deutsche text', post.text
+  end
  
   test "post has_many translations" do
     assert_equal PostTranslation, Post.first.translations.first.class

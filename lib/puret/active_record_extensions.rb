@@ -36,8 +36,10 @@ module Puret
             # if translation not present in current locale,
             # use default locale, if present.
             # Otherwise use first translation
-            translation = translations.detect { |t| t.locale.to_sym == I18n.locale && t[attribute] } ||
-              translations.detect { |t| t.locale.to_sym == puret_default_locale && t[attribute] } ||
+            # false booleans are considered present values, but empty strings are not
+            translation = translations.detect { |t| t.locale.to_sym == I18n.locale && (t[attribute].present? || t[attribute] == false) } ||
+              translations.detect { |t| t.locale.to_sym == puret_default_locale && (t[attribute].present? || t[attribute] == false) } ||
+              translations.detect { |t| t[attribute].present? || t[attribute] == false } ||
               translations.first
 
             translation ? translation[attribute] : nil
