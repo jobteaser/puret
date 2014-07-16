@@ -1,4 +1,4 @@
-== Puret
+== Customizable Puret: Normal or with a unique locale
 We wanted to change for a short period of time one of our model in order to have only one translation without changing the current behaviour.
 It is now possible to set the locale even if the I18n.locale is different.
 
