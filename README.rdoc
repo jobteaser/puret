@@ -1,5 +1,2 @@
 == Puret
- Creating a locale customization for Puret (pending)
-
-
-Copyright (c) 2010 Johannes Jörg Schmidt, TF, released under the MIT license
+Creating a locale customization for Puret (pending)
