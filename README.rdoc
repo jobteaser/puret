@@ -22,15 +22,15 @@ The usage is the same as the current one https://github.com/jo/puret/blob/master
 If you want to have a unique translation
 * you will have to add in your model the :locale method in your puret call 
 
-  class Post < ActiveRecord::Base
-    puret :title, :description, :locale
-  end
+    class Post < ActiveRecord::Base
+      puret :title, :description, :locale
+    end
 
 * You will then be able to use the locale attribute like if it was a Post attribute
 
-  post.title = 'Puret really rocks!'
-  post.locale = 'fr'
-  post.save
+    post.title = 'Puret really rocks!'
+    post.locale = 'fr'
+    post.save
   
 
   
