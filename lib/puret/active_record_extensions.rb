@@ -18,25 +18,31 @@ module Puret
       #     puret :title, :description
       #   end
       def puret(*attributes)
-        make_it_puret! unless included_modules.include?(InstanceMethods)
+        unique_locale = attributes.delete(:locale)
+        make_it_puret(unique_locale) unless included_modules.include?(InstanceMethods)
+        if unique_locale
+          set_unique_locale
+        else
+          locale = I18n.locale
+        end
 
         attributes.each do |attribute|
           # attribute setter
           define_method "#{attribute}=" do |value|
-            puret_attributes[I18n.locale][attribute] = value
+            puret_attributes[locale][attribute] = value
           end
 
           # attribute getter
           define_method attribute do
             # return previously setted attributes if present
-            return puret_attributes[I18n.locale][attribute] if puret_attributes[I18n.locale][attribute]
+            return puret_attributes[locale][attribute] if puret_attributes[locale][attribute]
             return if new_record?
 
             # Lookup chain:
             # if translation not present in current locale,
             # use default locale, if present.
             # Otherwise use first translation
-            translation = translations.detect { |t| t.locale.to_sym == I18n.locale && t[attribute] } ||
+            translation = translations.detect { |t| t.locale.to_sym == locale && t[attribute] } ||
               translations.detect { |t| t.locale.to_sym == puret_default_locale && t[attribute] } ||
               translations.first
 
@@ -51,13 +57,24 @@ module Puret
 
       private
 
+      def set_unique_locale
+        @puret_unique = true
+        define_method "locale" do
+          translations.first ? translations.first.locale : I18n.locale.to_s
+        end
+        define_method "locale=" do |value|
+          puret_attributes[locale]['locale'] = value
+        end
+      end
+
+
       # configure model
-      def make_it_puret!
+      def make_it_puret(unique = false)
         include InstanceMethods
 
         has_many :translations, :class_name => "#{self.to_s}Translation", :dependent => :destroy, :order => "created_at DESC"
         validates_associated :translations
-        after_save :update_translations!
+        after_save (unique ? :update_unique_translation! : :update_translations!)
       end
     end
 
@@ -78,6 +95,16 @@ module Puret
         return if puret_attributes.blank?
         puret_attributes.each do |locale, attributes|
           translation = translations.find_or_initialize_by_locale(locale.to_s)
+          translation.attributes = translation.attributes.merge(attributes)
+          translation.save!
+        end
+      end
+
+      # called after save
+      def update_unique_translation!
+        return if puret_attributes.blank?
+        puret_attributes.each do |locale, attributes|
+          translation = translations.first_or_initialize
           translation.attributes = translation.attributes.merge(attributes)
           translation.save!
         end
