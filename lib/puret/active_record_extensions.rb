@@ -63,7 +63,7 @@ module Puret
           translations.first ? translations.first.locale : I18n.locale.to_s
         end
         define_method "locale=" do |value|
-          puret_attributes[locale]['locale'] = value
+          puret_attributes[:unique_locale] = value
         end
       end
 
@@ -103,9 +103,10 @@ module Puret
       # called after save
       def update_unique_translation!
         return if puret_attributes.blank?
+        unique_locale = puret_attributes.delete(:unique_locale) || locale
         puret_attributes.each do |locale, attributes|
           translation = translations.first_or_initialize
-          translation.attributes = translation.attributes.merge(attributes)
+          translation.attributes = translation.attributes.merge(attributes).merge(locale: unique_locale)
           translation.save!
         end
       end
