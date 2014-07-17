@@ -20,29 +20,27 @@ module Puret
       def puret(*attributes)
         unique_locale = attributes.delete(:locale)
         make_it_puret(unique_locale) unless included_modules.include?(InstanceMethods)
-        if unique_locale
-          set_unique_locale
-        else
-          locale = I18n.locale
-        end
+        set_unique_locale(unique_locale)
 
         attributes.each do |attribute|
           # attribute setter
           define_method "#{attribute}=" do |value|
-            puret_attributes[locale][attribute] = value
+            current_locale = has_unique_locale? ? locale.to_sym : I18n.locale
+            puret_attributes[current_locale][attribute] = value
           end
 
           # attribute getter
           define_method attribute do
             # return previously setted attributes if present
-            return puret_attributes[locale][attribute] if puret_attributes[locale][attribute]
+            current_locale = has_unique_locale? ? locale.to_sym : I18n.locale
+            return puret_attributes[current_locale][attribute] if !puret_attributes[current_locale][attribute].nil?
             return if new_record?
 
             # Lookup chain:
             # if translation not present in current locale,
             # use default locale, if present.
             # Otherwise use first translation
-            translation = translations.detect { |t| t.locale.to_sym == locale && t[attribute] } ||
+            translation = translations.detect { |t| t.locale.to_sym == current_locale && t[attribute] } ||
               translations.detect { |t| t.locale.to_sym == puret_default_locale && t[attribute] } ||
               translations.first
 
@@ -57,16 +55,24 @@ module Puret
 
       private
 
-      def set_unique_locale
-        @puret_unique = true
-        define_method "locale" do
-          translations.first ? translations.first.locale : I18n.locale.to_s
+      def set_unique_locale(unique_locale)
+        if unique_locale
+          define_method "locale" do
+            puret_attributes[:unique_locale] || translations.first ? translations.first.locale : I18n.locale.to_s
+          end
+          define_method "locale=" do |value|
+            puret_attributes[:unique_locale] = value
+          end
+          define_method "has_unique_locale?" do
+            true
+          end
+        else
+          define_method "has_unique_locale?" do
+            false
+          end
         end
-        define_method "locale=" do |value|
-          puret_attributes[:unique_locale] = value
-        end
-      end
 
+      end
 
       # configure model
       def make_it_puret(unique = false)
