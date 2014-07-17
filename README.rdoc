@@ -1,2 +1,37 @@
-== Puret
-Creating a locale customization for Puret (pending)
+== Customizable Puret: Normal or with a unique locale
+We wanted to change for a short period of time one of our model in order to have only one translation without changing the current behaviour.
+It is now possible to set the locale even if the I18n.locale is different.
+
+
+== Installation
+
+
+You have to use this specific version
+
+  gem 'puret', :git => 'git://github.com/mariekou/puretUniqueLocale.git'
+
+Do not forget to run
+
+  bundle install
+
+
+== Basic Usage
+
+The usage is the same as the current one https://github.com/jo/puret/blob/master/README.rdoc
+
+If you want to have a unique translation
+* you will have to add in your model the :locale method in your puret call 
+
+    class Post < ActiveRecord::Base
+      puret :title, :description, :locale
+    end
+
+* You will then be able to use the locale attribute like if it was a Post attribute
+
+    post.title = 'Puret really rocks!'
+    post.locale = 'fr'
+    post.save
+  
+
+  
+
