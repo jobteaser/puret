@@ -111,7 +111,8 @@ module Puret
       # called after save
       def update_unique_translation!
         return if puret_attributes.blank?
-        unique_locale = puret_attributes.delete(:unique_locale) || locale
+        locale_attribute =  puret_attributes.delete(:unique_locale)
+        unique_locale = (locale_attribute if locale_attribute.present?) || locale
         puret_attributes.each do |locale, attributes|
           translation = translations.first_or_initialize
           translation.attributes = translation.attributes.merge(attributes).merge(locale: unique_locale)
