@@ -37,11 +37,12 @@ module Puret
             return if new_record?
 
             # Lookup chain:
-            # if translation not present in current locale,
-            # use default locale, if present.
-            # Otherwise use first translation
-            translation = translations.detect { |t| t.locale.to_sym == current_locale && t[attribute] } ||
-              translations.detect { |t| t.locale.to_sym == puret_default_locale && t[attribute] } ||
+            #   - if translation not present in current locale, use default locale, if present,
+            #   - else, use a translation which provides the attribute,
+            #   - otherwise use first translation.
+            translation = translations.detect { |t| t.locale.to_sym == current_locale && !t[attribute].nil? } ||
+              translations.detect { |t| t.locale.to_sym == puret_default_locale && !t[attribute].nil? } ||
+              translations.detect { |t| !t[attribute].nil? } ||
               translations.first
 
             translation ? translation[attribute] : nil
