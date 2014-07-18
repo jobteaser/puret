@@ -18,28 +18,31 @@ module Puret
       #     puret :title, :description
       #   end
       def puret(*attributes)
-        make_it_puret! unless included_modules.include?(InstanceMethods)
+        unique_locale = attributes.delete(:locale)
+        make_it_puret(unique_locale) unless included_modules.include?(InstanceMethods)
+        set_unique_locale(unique_locale)
 
         attributes.each do |attribute|
           # attribute setter
           define_method "#{attribute}=" do |value|
-            puret_attributes[I18n.locale][attribute] = value
+            current_locale = has_unique_locale? ? locale.to_sym : I18n.locale
+            puret_attributes[current_locale][attribute] = value
           end
 
           # attribute getter
           define_method attribute do
             # return previously setted attributes if present
-            return puret_attributes[I18n.locale][attribute] if puret_attributes[I18n.locale][attribute]
+            current_locale = has_unique_locale? ? locale.to_sym : I18n.locale
+            return puret_attributes[current_locale][attribute] if !puret_attributes[current_locale][attribute].nil?
             return if new_record?
 
             # Lookup chain:
-            # if translation not present in current locale,
-            # use default locale, if present.
-            # Otherwise use first translation
-            # false booleans are considered present values, but empty strings are not
-            translation = translations.detect { |t| t.locale.to_sym == I18n.locale && (t[attribute].present? || t[attribute] == false) } ||
-              translations.detect { |t| t.locale.to_sym == puret_default_locale && (t[attribute].present? || t[attribute] == false) } ||
-              translations.detect { |t| t[attribute].present? || t[attribute] == false } ||
+            #   - if translation not present in current locale, use default locale, if present,
+            #   - else, use a translation which provides the attribute,
+            #   - otherwise use first translation.
+            translation = translations.detect { |t| t.locale.to_sym == current_locale && !t[attribute].nil? } ||
+              translations.detect { |t| t.locale.to_sym == puret_default_locale && !t[attribute].nil? } ||
+              translations.detect { |t| !t[attribute].nil? } ||
               translations.first
 
             translation ? translation[attribute] : nil
@@ -53,13 +56,32 @@ module Puret
 
       private
 
+      def set_unique_locale(unique_locale)
+        if unique_locale
+          define_method "locale" do
+            puret_attributes[:unique_locale] || translations.first ? translations.first.locale : I18n.locale.to_s
+          end
+          define_method "locale=" do |value|
+            puret_attributes[:unique_locale] = value
+          end
+          define_method "has_unique_locale?" do
+            true
+          end
+        else
+          define_method "has_unique_locale?" do
+            false
+          end
+        end
+
+      end
+
       # configure model
-      def make_it_puret!
+      def make_it_puret(unique = false)
         include InstanceMethods
 
         has_many :translations, :class_name => "#{self.to_s}Translation", :dependent => :destroy, :order => "created_at DESC"
         validates_associated :translations
-        after_save :update_translations!
+        after_save (unique ? :update_unique_translation! : :update_translations!)
       end
     end
 
@@ -81,6 +103,17 @@ module Puret
         puret_attributes.each do |locale, attributes|
           translation = translations.find_or_initialize_by_locale(locale.to_s)
           translation.attributes = translation.attributes.merge(attributes)
+          translation.save!
+        end
+      end
+
+      # called after save
+      def update_unique_translation!
+        return if puret_attributes.blank?
+        unique_locale = puret_attributes.delete(:unique_locale) || locale
+        puret_attributes.each do |locale, attributes|
+          translation = translations.first_or_initialize
+          translation.attributes = translation.attributes.merge(attributes).merge(locale: unique_locale)
           translation.save!
         end
       end
