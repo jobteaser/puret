@@ -59,8 +59,7 @@ module Puret
       def set_unique_locale(unique_locale)
         if unique_locale
           define_method "locale" do
-            (puret_attributes[:unique_locale] if puret_attributes[:unique_locale].present?) ||
-                (translations.first ? translations.first.locale : I18n.locale.to_s)
+            (translations.first ? translations.first.locale : I18n.locale.to_s)
           end
           define_method "locale=" do |value|
             puret_attributes[:unique_locale] = value
