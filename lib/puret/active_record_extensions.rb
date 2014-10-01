@@ -79,7 +79,7 @@ module Puret
       def make_it_puret(unique = false)
         include InstanceMethods
 
-        has_many :translations, :class_name => "#{self.to_s}Translation", :dependent => :destroy, :order => "created_at DESC"
+        has_many :translations, -> { order('created_at DESC') }, :class_name => "#{self.to_s}Translation", :dependent => :destroy
         validates_associated :translations
         after_save (unique ? :update_unique_translation! : :update_translations!)
       end
@@ -101,7 +101,7 @@ module Puret
       def update_translations!
         return if puret_attributes.blank?
         puret_attributes.each do |locale, attributes|
-          translation = translations.find_or_initialize_by_locale(locale.to_s)
+          translation = translations.where(locale: locale.to_s).first || translations.new(locale: locale.to_s)
           translation.attributes = translation.attributes.merge(attributes)
           translation.save!
         end
