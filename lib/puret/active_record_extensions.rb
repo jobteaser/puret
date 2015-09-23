@@ -86,6 +86,10 @@ module Puret
     end
 
     module InstanceMethods
+      def changed?
+        super || puret_attributes != {}
+      end
+
       def puret_default_locale
         return default_locale.to_sym if respond_to?(:default_locale)
         return self.class.default_locale.to_sym if self.class.respond_to?(:default_locale)
