@@ -109,6 +109,11 @@ module Puret
         @puret_attributes ||= Hash.new { |hash, key| hash[key] = {} }
       end
 
+      def reload
+        @puret_attributes = nil
+        super
+      end
+
       # called after save
       def update_translations!
         return if puret_attributes.blank?
