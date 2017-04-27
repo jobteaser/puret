@@ -109,7 +109,7 @@ module Puret
         @puret_attributes ||= Hash.new { |hash, key| hash[key] = {} }
       end
 
-      def reload
+      def reload(options = nil)
         @puret_attributes = nil
         super
       end
