@@ -3,6 +3,7 @@ require 'test_helper'
 describe 'puret' do
   before do
     setup_db
+    I18n.config.available_locales = [:de, :en, :sv]
     I18n.locale = I18n.default_locale = :en
     Post.create(:title => 'English title')
   end
