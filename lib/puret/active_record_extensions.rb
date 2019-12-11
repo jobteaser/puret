@@ -26,6 +26,7 @@ module Puret
           # attribute setter
           define_method "#{attribute}=" do |value|
             current_locale = has_unique_locale? ? locale.to_sym : I18n.locale
+            puret_attributes[current_locale] ||= {}
             puret_attributes[current_locale][attribute] = value
           end
 
@@ -33,7 +34,8 @@ module Puret
           define_method attribute do
             # return previously setted attributes if present
             current_locale = has_unique_locale? ? locale.to_sym : I18n.locale
-            return puret_attributes[current_locale][attribute] if !puret_attributes[current_locale][attribute].nil?
+            attributes = puret_attributes.fetch(current_locale, {})[attribute]
+            return attributes if attributes.present?
             return if new_record?
 
             # Lookup chain:
@@ -106,7 +108,7 @@ module Puret
 
       # attributes are stored in @puret_attributes instance variable via setter
       def puret_attributes
-        @puret_attributes ||= Hash.new { |hash, key| hash[key] = {} }
+        @puret_attributes ||= Hash.new
       end
 
       def reload(options = nil)
