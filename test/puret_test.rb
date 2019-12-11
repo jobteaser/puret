@@ -133,4 +133,13 @@ describe 'puret' do
   it 'model should provide attribute_before_type_cast' do
     assert_equal Post.first.title, Post.first.title_before_type_cast
   end
+
+  it 'does not try to create extra empty translations when loaded with a different locale and updated' do
+    I18n.locale = :de
+    post = Post.last
+    translations_before = post.translations.to_a
+    post.update!(position: 0)
+    translations_after = post.translations.to_a
+    assert_equal translations_after, translations_before
+  end
 end
