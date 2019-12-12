@@ -34,8 +34,8 @@ module Puret
           define_method attribute do
             # return previously setted attributes if present
             current_locale = has_unique_locale? ? locale.to_sym : I18n.locale
-            attributes = puret_attributes.fetch(current_locale, {})[attribute]
-            return attributes if attributes.present?
+            value = puret_attributes.fetch(current_locale, {})[attribute]
+            return value unless value.nil?
             return if new_record?
 
             # Lookup chain:
